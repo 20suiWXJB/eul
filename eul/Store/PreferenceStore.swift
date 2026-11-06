@@ -58,7 +58,7 @@ class PreferenceStore: ObservableObject {
     @Published var networkRefreshRate = 3
     @Published var showIcon = true
     @Published var showCPUTopActivities = true
-    @Published var showRAMTopActivities = false
+    @Published var showRAMTopActivities = true
     @Published var showNetworkTopActivities = false
     @Published var cpuMenuDisplay: Preference.CpuMenuDisplay = .usagePercentage
     @Published var checkStatusItemVisibility = true

@@ -22,6 +22,7 @@ class TopStore: ObservableObject {
     private var ramActiveCancellable: AnyCancellable?
     private var cpuFirstLoaded = false
     private var cpuSession = 0
+    private var ramSession = 0
 
     @ObservedObject var preferenceStore = SharedStore.preference
     @Published var cpuDataAvailable = false
@@ -42,6 +43,7 @@ class TopStore: ObservableObject {
         }
 
         let refreshRate = preferenceStore.smcRefreshRate
+        ramSession += 1
         ramDataAvailable = false
         ramTopProcesses = []
 
@@ -72,6 +74,8 @@ class TopStore: ObservableObject {
                 }
             }
         }
+
+        prefetchRAMUsage(session: ramSession)
     }
 
     func updateCPU(shouldStart: Bool) {
@@ -212,6 +216,48 @@ extension TopStore {
                 }
                 cpuTopProcesses = Array(result)
                 cpuDataAvailable = true
+            }
+        }
+    }
+
+    /// Fills the RAM top list right away with a `ps` snapshot to avoid showing
+    /// the loading spinner while `top -l 0` completes its first cycle.
+    private func prefetchRAMUsage(session: Int) {
+        DispatchQueue.global(qos: .userInitiated).async { [self] in
+            guard let output = shell("ps -Ao pid=,rss=,comm= -m") else {
+                return
+            }
+
+            let runningApps = NSWorkspace.shared.runningApplications
+            let result = output
+                .split(separator: "\n")
+                .compactMap { line -> RamUsage? in
+                    let row = line.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
+                    guard row.count == 3,
+                          let pid = Int(row[0]),
+                          let rssKB = Double(row[1]),
+                          pid != 0, rssKB > 0
+                    else { return nil }
+                    let usageMB = rssKB / 1024.0
+                    let value = 100 * (usageMB / memorySizeMB)
+                    return RamUsage(
+                        pid: pid,
+                        command: String(row[2]).trimmingCharacters(in: .whitespaces),
+                        value: value,
+                        usageAmount: usageMB,
+                        runningApp: runningApps.first(where: { $0.processIdentifier == pid })
+                    )
+                }
+                .prefix(5)
+
+            DispatchQueue.main.async { [self] in
+                guard session == ramSession,
+                      ramTask != nil,
+                      !ramDataAvailable,
+                      !result.isEmpty
+                else { return }
+                ramTopProcesses = Array(result)
+                ramDataAvailable = true
             }
         }
     }
