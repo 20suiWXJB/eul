@@ -4,6 +4,8 @@
 
 # eul
 
+English | [简体中文](README.zh-CN.md)
+
 This fork is independently maintained by [20suiWXJB](https://github.com/20suiWXJB), based on [gao-sun/eul](https://github.com/gao-sun/eul). The original MIT license and contributor acknowledgements are retained.
 
 ![Preview](https://user-images.githubusercontent.com/14722250/105626766-f718ab00-5e6c-11eb-9761-661ff85c8faf.jpg)
