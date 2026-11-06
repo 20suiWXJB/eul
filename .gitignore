@@ -48,3 +48,6 @@ Carthage/Build/
 BuildTools/.build
 BuildTools/.swiftpm
 
+# Packaging output
+/dist/
+
