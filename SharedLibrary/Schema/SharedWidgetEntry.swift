@@ -27,7 +27,11 @@ public extension SharedWidgetEntry {
         self.init(date: Date(), outdated: outdated)
     }
 
+    var expirationDate: Date {
+        date.addingTimeInterval(60)
+    }
+
     var isValid: Bool {
-        !outdated && date.timeIntervalSinceNow >= -3
+        !outdated && expirationDate > Date()
     }
 }

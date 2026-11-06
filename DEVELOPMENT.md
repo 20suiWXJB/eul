@@ -152,3 +152,15 @@ Xcode 27.2 已安装并启用，`xcodebuild -checkFirstLaunchStatus` 检查通�
 - 控制台仍有 macOS `com.apple.linkd.autoShortcut` 连接错误和旧 API 弃用警告；本次不修改自动更新来源或扩展其他系统适配范围。
 
 所有修改保留在本地工作区，没有提交或推送 GitHub。
+
+## 本机 Widget 数据共享修复（2026-11-06）
+
+本节替代上文 2026-11-05 的 Debug 共享禁用说明。Debug 和 Release 均改用普通偏好域 `com.gaosun.eul.widget-data`：主程序写入，四个 Widget 保留沙盒，只申请该域的 `com.apple.security.temporary-exception.shared-preference.read-only` 权限，不再声明旧 App Group。此配置用于当前 Mac 的临时签名构建，未验证正式签名或 App Store 分发。
+
+数据有效期统一为采集后 60 秒，时间线失效节点使用同一截止时间，保留 10 秒的时间线刷新请求间隔。无有效数据时中英文提示改为数据不可用或已过期。四个 Widget 同时保留 macOS 14 容器背景适配、原有 16 点内边距和 macOS 12 兼容路径。
+
+`/usr/bin/python3 Tests/run-regressions.py` 现编译为独立可执行文件，使用随机隔离偏好域并在完成后清理，验证 Codable、跨进程读取、缺失及损坏数据、60 秒有效期边界和时间线截止时间；测试不写入实际应用偏好域。该检查及原有 SMC/GPU 回归均通过，日志 `/private/tmp/eul-widget-sharing-regressions.log`。
+
+arm64 Debug 和 arm64/x86_64 Release 构建均通过，日志分别为 `/private/tmp/eul-widget-sharing-debug.log`、`/private/tmp/eul-widget-sharing-release.log`。Release 按现有打包流程重签 helper 和主程序后，`codesign --verify --deep --strict` 通过，已原位安装并启动 `/Applications/eul.app`；此前应用备份为 `/private/tmp/eul-widget-sharing-backup-1p5sifxs/eul.app`。
+
+实机已确认新偏好域持续写入 CPU、内存、网络和电池实时数据，日志未见新的共享写入权限错误。桌面原组件曾保留系统占位图；用户重新添加后确认正常。没有单独完成四类组件逐一截图或退出主程序后的 60 秒过期及重启恢复实机验收；过期逻辑由上述回归检查覆盖。

@@ -66,8 +66,16 @@ struct MemoryWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            MemoryWidgetEntryView(entry: entry)
+            if #available(macOS 14.0, *) {
+                MemoryWidgetEntryView(entry: entry)
+                    .containerBackground(for: .widget) {
+                        Color.controlBackground
+                    }
+            } else {
+                MemoryWidgetEntryView(entry: entry)
+            }
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("widget.memory.title".localized())
         .description("widget.memory.description".localized())
         .supportedFamilies([.systemSmall])

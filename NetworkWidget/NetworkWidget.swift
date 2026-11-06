@@ -64,8 +64,16 @@ struct NetworkWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            NetworkWidgetEntryView(entry: entry)
+            if #available(macOS 14.0, *) {
+                NetworkWidgetEntryView(entry: entry)
+                    .containerBackground(for: .widget) {
+                        Color.controlBackground
+                    }
+            } else {
+                NetworkWidgetEntryView(entry: entry)
+            }
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("widget.network.title".localized())
         .description("widget.network.description".localized())
         .supportedFamilies([.systemSmall])

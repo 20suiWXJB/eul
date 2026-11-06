@@ -71,8 +71,16 @@ struct CpuWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            CpuWidgetEntryView(entry: entry)
+            if #available(macOS 14.0, *) {
+                CpuWidgetEntryView(entry: entry)
+                    .containerBackground(for: .widget) {
+                        Color.controlBackground
+                    }
+            } else {
+                CpuWidgetEntryView(entry: entry)
+            }
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("widget.cpu.title".localized())
         .description("widget.cpu.description".localized())
         .supportedFamilies([.systemSmall])

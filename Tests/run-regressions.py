@@ -8,11 +8,15 @@ import os
 import subprocess
 import sys
 import tempfile
+import uuid
 
 root = Path(__file__).resolve().parents[1]
 sources = [
     "SharedLibrary/Schema/SmcStruct.swift",
     "SharedLibrary/Schema/SharedEntry.swift",
+    "SharedLibrary/Schema/SharedWidgetEntry.swift",
+    "SharedLibrary/Schema/StandardProvider.swift",
+    "SharedLibrary/Schema/MemoryEntry.swift",
     "SharedLibrary/Utilities/Container.swift",
     "eul/Utilities/SMC.swift",
     "eul/Schema/TemperatureData.swift",
@@ -32,9 +36,12 @@ class SmcControl {
     var gpuProximityTemperature: Double? = nil
 }
 """
-parts = [stub]
+suite_name = "com.gaosun.eul.regressions." + uuid.uuid4().hex
+parts = [stub, f'let regressionSuiteName = "{suite_name}"']
 for name in sources:
     source = (root / name).read_text()
+    if name == "SharedLibrary/Utilities/Container.swift":
+        source = source.replace('"com.gaosun.eul.widget-data"', f'"{suite_name}"')
     parts.append(source.replace("import SharedLibrary\n", ""))
 parts.append((root / "Tests/RegressionChecks.swift").read_text())
 env = dict(os.environ, PATH="/usr/bin:/bin:/usr/sbin:/sbin")
@@ -43,6 +50,9 @@ env["SDKROOT"] = subprocess.check_output(
 with tempfile.TemporaryDirectory(prefix="eul-regressions-") as directory:
     script = Path(directory) / "main.swift"
     script.write_text("\n".join(parts))
-    subprocess.run(["/usr/bin/xcrun", "swift", "-module-cache-path", str(Path(directory) / "cache"),
-                    "-D", "DEBUG", str(script), *sys.argv[1:]],
+    executable = Path(directory) / "regressions"
+    subprocess.run(["/usr/bin/xcrun", "swiftc", "-module-cache-path", str(Path(directory) / "cache"),
+                    "-D", "DEBUG", str(script), "-o", str(executable)],
+                   env=env, check=True)
+    subprocess.run([str(executable), *sys.argv[1:]],
                    env=env, check=True)

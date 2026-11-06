@@ -73,14 +73,60 @@ func checkRegressions() throws {
     let badTemperature: NSDictionary = ["PerformanceStatistics": ["Device Utilization %": 2, "Temperature(C)": Double.infinity]]
     precondition(GPU.statistic(from: badTemperature)!.temperature == nil)
 
-    struct Entry: SharedEntry {
-        static let containerKey = "regression"
-        var value = 1
+    try checkWidgetSharing()
+    print("PASS: SMC layout/decoding, missing readings/recovery, sensor groups, GPU registry/PCI matching")
+}
+
+struct RegressionProvider: StandardProvider {
+    typealias WidgetEntry = MemoryEntry
+}
+
+func checkWidgetSharing() throws {
+    precondition(Container.isSharedStorageAvailable)
+    let defaults = Container.defaults!
+    defer {
+        defaults.removePersistentDomain(forName: regressionSuiteName)
+        defaults.synchronize()
     }
-    precondition(!Container.isSharedStorageAvailable && Container.defaults == nil)
-    Container.set(Entry())
-    precondition(Container.get(Entry.self) == nil)
-    print("PASS: SMC layout/decoding, missing readings/recovery, sensor groups, GPU registry/PCI matching, Debug shared storage")
+    let provider = RegressionProvider()
+    let now = Date()
+    precondition(Container.get(MemoryEntry.self) == nil)
+    let missing = provider.makeTimeline(at: now)
+    precondition(missing.entries.count == 1 && missing.entries[0].outdated)
+    precondition(missing.policy == .after(now.addingTimeInterval(10)))
+
+    defaults.set(Data("invalid plist".utf8), forKey: MemoryEntry.containerKey)
+    precondition(Container.get(MemoryEntry.self) == nil)
+    precondition(provider.makeTimeline(at: now).entries[0].outdated)
+
+    let entry = MemoryEntry(date: now.addingTimeInterval(-30), used: 10, total: 18, temp: 50)
+    Container.set(entry)
+    let decoded = Container.get(MemoryEntry.self)!
+    precondition(decoded.date == entry.date && decoded.used == 10 && decoded.total == 18 && decoded.temp == 50)
+    precondition(decoded.isValid)
+    precondition(entry.expirationDate == now.addingTimeInterval(30))
+    let timeline = provider.makeTimeline(at: now)
+    precondition(timeline.entries.count == 2 && !timeline.entries[0].outdated)
+    precondition(timeline.entries[1].outdated && timeline.entries[1].date == entry.expirationDate)
+    precondition(timeline.policy == .after(now.addingTimeInterval(10)))
+    precondition(provider.makeTimeline(at: entry.expirationDate).entries.count == 1)
+    precondition(MemoryEntry(date: now.addingTimeInterval(-59), used: 10, total: 18).isValid)
+    precondition(!MemoryEntry(date: now.addingTimeInterval(-60), used: 10, total: 18).isValid)
+    precondition(!MemoryEntry(date: now.addingTimeInterval(-61), used: 10, total: 18).isValid)
+    precondition(!MemoryEntry(date: now, outdated: true).isValid)
+
+    defaults.synchronize()
+    let reader = Process()
+    reader.executableURL = URL(fileURLWithPath: CommandLine.arguments[0])
+    reader.arguments = ["--read-widget"]
+    try reader.run()
+    reader.waitUntilExit()
+    precondition(reader.terminationStatus == 0)
+
+    Container.set(MemoryEntry(date: now.addingTimeInterval(-61), used: 10, total: 18))
+    let expired = provider.makeTimeline(at: now)
+    precondition(expired.entries.count == 1 && !expired.entries[0].isValid)
+    print("PASS: isolated Widget storage, Codable/cross-process reads, missing/corrupt data, 60-second expiry and timeline")
 }
 
 func probeHardware() throws {
@@ -139,6 +185,13 @@ func probeGPULoad() throws {
             nextSample = Date().addingTimeInterval(0.5)
         }
     }
+}
+
+if CommandLine.arguments.contains("--read-widget") {
+    let entry = Container.get(MemoryEntry.self)!
+    precondition(entry.used == 10 && entry.total == 18 && entry.temp == 50 && entry.isValid)
+    print("PASS: separate process read Widget data")
+    exit(0)
 }
 
 try checkRegressions()

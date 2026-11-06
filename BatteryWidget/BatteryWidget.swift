@@ -76,8 +76,16 @@ struct BatteryWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            BatteryWidgetEntryView(entry: entry)
+            if #available(macOS 14.0, *) {
+                BatteryWidgetEntryView(entry: entry)
+                    .containerBackground(for: .widget) {
+                        Color.controlBackground
+                    }
+            } else {
+                BatteryWidgetEntryView(entry: entry)
+            }
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("widget.battery.title".localized())
         .description("widget.battery.description".localized())
         .supportedFamilies([.systemSmall])

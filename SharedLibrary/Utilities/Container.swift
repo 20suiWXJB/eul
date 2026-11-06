@@ -13,11 +13,7 @@ public enum Container {
         defaults != nil
     }
 
-    #if DEBUG
-        public static let defaults: UserDefaults? = nil
-    #else
-        public static let defaults = UserDefaults(suiteName: "com.gaosun.eul.shared")
-    #endif
+    public static let defaults = UserDefaults(suiteName: "com.gaosun.eul.widget-data")
     static let pListEncoder = PropertyListEncoder()
     static let pListDecoder = PropertyListDecoder()
 

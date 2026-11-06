@@ -213,7 +213,7 @@
 "cpu_display_mode.load_average" = "Load Average";
 
 //MARK: Widget
-"widget.not_available" = "eul isn't running";
+"widget.not_available" = "eul data is unavailable or outdated";
 "widget.cpu.title" = "CPU Widget";
 "widget.cpu.description" = "Display CPU information";
 "widget.memory.title" = "Memory Widget";
@@ -223,6 +223,6 @@
 "widget.network.title" = "Network Widget";
 "widget.network.description" = "Display network information";
 
-"ui.widget.local_debug_unavailable" = "Widget data sharing is disabled in local debug builds.";
+"ui.widget.local_debug_unavailable" = "Widget data sharing could not be initialized.";
 
 "show_status_bar_unit" = "Show units in status bar";
