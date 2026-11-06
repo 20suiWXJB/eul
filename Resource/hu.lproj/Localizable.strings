@@ -222,3 +222,5 @@
 "widget.battery.description" = "Akku információ megjelenítése";
 "widget.network.title" = "Hálózat";
 "widget.network.description" = "Hálózati információ megjelenítése";
+
+"show_status_bar_unit" = "Mértékegységek megjelenítése az állapotsávban";

@@ -221,3 +221,5 @@
 "widget.battery.description" = "ဘက်ထရီ အချက်အလက်များပြပါ";
 "widget.network.title" = "Network Widget";
 "widget.network.description" = "ကွန်ယက် အချက်အလက်များပြပါ";
+
+"show_status_bar_unit" = "အခြေအနေဘားတွင် ယူနစ်များပြသရန်";

@@ -12,18 +12,23 @@ struct GpuView: View {
     @EnvironmentObject var gpuStore: GpuStore
     @EnvironmentObject var componentConfigStore: ComponentConfigStore
     @EnvironmentObject var textStore: ComponentsStore<GpuTextComponent>
+    @EnvironmentObject var preferenceStore: PreferenceStore
 
     var config: EulComponentConfig {
         componentConfigStore[.GPU]
+    }
+
+    func u(_ s: String) -> String {
+        preferenceStore.showStatusBarUnit ? s : s.droppingUnit
     }
 
     var texts: [String] {
         textStore.activeComponents.map {
             switch $0 {
             case .usagePercentage:
-                return gpuStore.usageAverageString ?? "N/A"
+                return u(gpuStore.usageAverageString ?? "N/A")
             case .temperature:
-                return gpuStore.temperatureAverage?.temperatureString ?? "N/A"
+                return u(gpuStore.temperatureAverage?.temperatureString ?? "N/A")
             }
         }
     }

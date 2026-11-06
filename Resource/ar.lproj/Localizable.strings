@@ -223,3 +223,5 @@
 "widget.battery.description" = "Display battery information";
 "widget.network.title" = "Network Widget";
 "widget.network.description" = "Display network information";
+
+"show_status_bar_unit" = "إظهار الوحدات في شريط الحالة";

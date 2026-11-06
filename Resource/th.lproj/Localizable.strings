@@ -222,3 +222,5 @@
 "widget.battery.description" = "แสดงข้อมูลแบตเตอรี่";
 "widget.network.title" = "วิดเจ็ตเครือข่าย";
 "widget.network.description" = "แสดงข้อมูลเครือข่าย";
+
+"show_status_bar_unit" = "แสดงหน่วยในแถบสถานะ";

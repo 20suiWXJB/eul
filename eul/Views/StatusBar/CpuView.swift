@@ -12,18 +12,23 @@ struct CpuView: View {
     @EnvironmentObject var cpuStore: CpuStore
     @EnvironmentObject var componentConfigStore: ComponentConfigStore
     @EnvironmentObject var textStore: ComponentsStore<CpuTextComponent>
+    @EnvironmentObject var preferenceStore: PreferenceStore
 
     var config: EulComponentConfig {
         componentConfigStore[.CPU]
+    }
+
+    func u(_ s: String) -> String {
+        preferenceStore.showStatusBarUnit ? s : s.droppingUnit
     }
 
     var texts: [String] {
         textStore.activeComponents.map {
             switch $0 {
             case .usagePercentage:
-                return cpuStore.usageString
+                return u(cpuStore.usageString)
             case .temperature:
-                return cpuStore.temp?.temperatureString ?? "N/A"
+                return u(cpuStore.temp?.temperatureString ?? "N/A")
             case .loadAverage1Min:
                 return cpuStore.loadAverage1MinString
             case .loadAverage5Min:

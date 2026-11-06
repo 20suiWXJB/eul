@@ -57,6 +57,7 @@ class PreferenceStore: ObservableObject {
     @Published var smcRefreshRate = 3
     @Published var networkRefreshRate = 3
     @Published var showIcon = true
+    @Published var showStatusBarUnit = true
     @Published var showCPUTopActivities = true
     @Published var showRAMTopActivities = true
     @Published var showNetworkTopActivities = false
@@ -83,7 +84,7 @@ class PreferenceStore: ObservableObject {
             "checkStatusItemVisibility": checkStatusItemVisibility,
             "appearance": appearanceMode.rawValue,
             "upgradeMethod": upgradeMethod.rawValue,
-
+            "showStatusBarUnit": showStatusBarUnit,
         ])
     }
 
@@ -180,6 +181,9 @@ class PreferenceStore: ObservableObject {
                 }
                 if let raw = data["upgradeMethod"].string, let value = UpgradeMethod(rawValue: raw) {
                     upgradeMethod = value
+                }
+                if let value = data["showStatusBarUnit"].bool {
+                    showStatusBarUnit = value
                 }
             } catch {
                 print("Unable to get preference data from user defaults")

@@ -12,18 +12,23 @@ struct NetworkView: View {
     @EnvironmentObject var networkStore: NetworkStore
     @EnvironmentObject var componentConfigStore: ComponentConfigStore
     @EnvironmentObject var textStore: ComponentsStore<NetworkTextComponent>
+    @EnvironmentObject var preferenceStore: PreferenceStore
 
     var config: EulComponentConfig {
         componentConfigStore[.Network]
+    }
+
+    func u(_ s: String) -> String {
+        preferenceStore.showStatusBarUnit ? s : s.droppingUnit
     }
 
     var texts: [String] {
         textStore.activeComponents.map {
             switch $0 {
             case .upload:
-                return networkStore.outSpeed
+                return u(networkStore.outSpeed)
             case .download:
-                return networkStore.inSpeed
+                return u(networkStore.inSpeed)
             }
         }
     }

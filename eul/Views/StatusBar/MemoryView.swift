@@ -12,24 +12,29 @@ struct MemoryView: View {
     @EnvironmentObject var memoryStore: MemoryStore
     @EnvironmentObject var componentConfigStore: ComponentConfigStore
     @EnvironmentObject var textStore: ComponentsStore<MemoryTextComponent>
+    @EnvironmentObject var preferenceStore: PreferenceStore
 
     var config: EulComponentConfig {
         componentConfigStore[.Memory]
+    }
+
+    func u(_ s: String) -> String {
+        preferenceStore.showStatusBarUnit ? s : s.droppingUnit
     }
 
     var texts: [String] {
         textStore.activeComponents.map {
             switch $0 {
             case .free:
-                return memoryStore.freeString
+                return u(memoryStore.freeString)
             case .usage:
-                return memoryStore.usedString
+                return u(memoryStore.usedString)
             case .total:
-                return memoryStore.total.memoryString
+                return u(memoryStore.total.memoryString)
             case .usagePercentage:
-                return memoryStore.usedPercentageString
+                return u(memoryStore.usedPercentageString)
             case .temperature:
-                return memoryStore.temp?.temperatureString ?? "N/A"
+                return u(memoryStore.temp?.temperatureString ?? "N/A")
             }
         }
     }

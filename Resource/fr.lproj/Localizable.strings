@@ -222,3 +222,5 @@
 "widget.battery.description" = "Afficher les informations de la batterie";
 "widget.network.title" = "Widget Réseau";
 "widget.network.description" = "Afficher les informations du réseau";
+
+"show_status_bar_unit" = "Afficher les unités dans la barre d'état";

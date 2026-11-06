@@ -222,3 +222,5 @@
 "widget.battery.description" = "Отображать информацию о батарее";
 "widget.network.title" = "Виджет Сети";
 "widget.network.description" = "Отображать информацию о сети";
+
+"show_status_bar_unit" = "Показывать единицы в строке состояния";

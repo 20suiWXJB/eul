@@ -59,6 +59,9 @@ extension Preference {
                     }
                     .frame(width: 200)
                 }
+                Toggle(isOn: $preference.showStatusBarUnit) {
+                    Text("show_status_bar_unit".localized())
+                }
             }
             .padding(.vertical, 8)
         }

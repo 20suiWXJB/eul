@@ -12,22 +12,27 @@ struct DiskView: View {
     @EnvironmentObject var diskStore: DiskStore
     @EnvironmentObject var componentConfigStore: ComponentConfigStore
     @EnvironmentObject var textStore: ComponentsStore<DiskTextComponent>
+    @EnvironmentObject var preferenceStore: PreferenceStore
 
     var config: EulComponentConfig {
         componentConfigStore[.Disk]
+    }
+
+    func u(_ s: String) -> String {
+        preferenceStore.showStatusBarUnit ? s : s.droppingUnit
     }
 
     var texts: [String] {
         textStore.activeComponents.map {
             switch $0 {
             case .free:
-                return diskStore.freeString
+                return u(diskStore.freeString)
             case .usage:
-                return diskStore.usageString
+                return u(diskStore.usageString)
             case .total:
-                return diskStore.totalString
+                return u(diskStore.totalString)
             case .usagePercentage:
-                return diskStore.usagePercentageString
+                return u(diskStore.usagePercentageString)
             }
         }
     }

@@ -45,6 +45,11 @@ public extension String {
         filter("0123456789.".contains)
     }
 
+    var droppingUnit: String {
+        let v = numericOnly
+        return v.isEmpty ? self : v
+    }
+
     var nilIfEmpty: String? {
         trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : self
     }

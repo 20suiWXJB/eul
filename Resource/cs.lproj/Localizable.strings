@@ -222,3 +222,5 @@
 "widget.battery.description" = "Zobrazit informace o baterii";
 "widget.network.title" = "Widget Síť";
 "widget.network.description" = "Zobrazit informace o síti";
+
+"show_status_bar_unit" = "Zobrazit jednotky ve stavovém řádku";

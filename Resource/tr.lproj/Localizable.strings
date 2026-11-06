@@ -222,3 +222,5 @@
 "widget.battery.description" = "Pil bilgisini görüntüle";
 "widget.network.title" = "Ağ araç takımı";
 "widget.network.description" = "Ağ bilgisini görüntüle";
+
+"show_status_bar_unit" = "Durum çubuğunda birimleri göster";

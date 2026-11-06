@@ -222,3 +222,5 @@
 "widget.battery.description" = "バッテリーの情報を表示します。";
 "widget.network.title" = "ネットワーク";
 "widget.network.description" = "ネットワークの情報を表示します。";
+
+"show_status_bar_unit" = "ステータスバーに単位を表示";

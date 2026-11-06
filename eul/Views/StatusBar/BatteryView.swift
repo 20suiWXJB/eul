@@ -13,18 +13,23 @@ struct BatteryView: View {
     @EnvironmentObject var batteryStore: BatteryStore
     @EnvironmentObject var componentConfigStore: ComponentConfigStore
     @EnvironmentObject var textStore: ComponentsStore<BatteryTextComponent>
+    @EnvironmentObject var preferenceStore: PreferenceStore
 
     var config: EulComponentConfig {
         componentConfigStore[.Battery]
+    }
+
+    func u(_ s: String) -> String {
+        preferenceStore.showStatusBarUnit ? s : s.droppingUnit
     }
 
     var texts: [String] {
         textStore.activeComponents.map {
             switch $0 {
             case .percentage:
-                return batteryStore.charge.percentageString
+                return u(batteryStore.charge.percentageString)
             case .mah:
-                return "\(batteryStore.capacity) mAh"
+                return u("\(batteryStore.capacity) mAh")
             case .timeRemaining:
                 return batteryStore.timeRemaining
             }

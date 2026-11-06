@@ -225,3 +225,5 @@ battery.timeRemaining = "Time Rem.";
 "widget.battery.description" = "배터리 정보를 표시합니다";
 "widget.network.title" = "네트워크 위젯";
 "widget.network.description" = "네트워크 정보를 표시합니다";
+
+"show_status_bar_unit" = "상태 표시줄에 단위 표시";

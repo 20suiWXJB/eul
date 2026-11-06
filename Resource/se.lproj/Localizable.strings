@@ -172,3 +172,5 @@ Copyright © 2020 Gao Sun. All rights reserved.
 "widget.battery.description" = "Visa batteri detaljer";
 "widget.network.title" = "Nätverks Widget";
 "widget.network.description" = "Visa nätverksdetaljer";
+
+"show_status_bar_unit" = "Visa enheter i statusfältet";

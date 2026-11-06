@@ -224,3 +224,5 @@
 "widget.network.description" = "Display network information";
 
 "ui.widget.local_debug_unavailable" = "Widget data sharing is disabled in local debug builds.";
+
+"show_status_bar_unit" = "Show units in status bar";

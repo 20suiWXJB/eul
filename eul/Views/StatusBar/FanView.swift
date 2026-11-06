@@ -12,9 +12,14 @@ struct FanView: View {
     @EnvironmentObject var fanStore: FanStore
     @EnvironmentObject var componentConfigStore: ComponentConfigStore
     @EnvironmentObject var textStore: ComponentsStore<FanTextComponent>
+    @EnvironmentObject var preferenceStore: PreferenceStore
 
     var config: EulComponentConfig {
         componentConfigStore[.Fan]
+    }
+
+    func u(_ s: String) -> String {
+        preferenceStore.showStatusBarUnit ? s : s.droppingUnit
     }
 
     var averageRpm: String {
@@ -25,12 +30,12 @@ struct FanView: View {
     var texts: [String] {
         textStore.activeComponents.compactMap { component in
             if component.isAverage {
-                return averageRpm
+                return u(averageRpm)
             }
             guard let fan = fanStore.fans.first(where: { $0.id == component.id }) else {
                 return nil
             }
-            return fan.currentSpeedString
+            return u(fan.currentSpeedString)
         }
     }
 
