@@ -5,24 +5,35 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   Build:
-    runs-on: macos-latest
+    runs-on: xcode-27
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/cache@v2
+      - uses: actions/checkout@v7
         with:
-          path: .build
-          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: |
-            ${{ runner.os }}-spm-
-      - name: Install xcpretty
-        run: gem install xcpretty
-      - name: SwiftFormat # this is necessary since we'll format files in build phase
-        run: swift run -c release swiftformat ../ --lint
-        working-directory: ./BuildTools
-      - name: Switch Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_12.4.app
-      - name: Build
-        run: xcodebuild -scheme eul -project ./eul.xcodeproj -sdk macosx build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED="NO" CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO" | xcpretty && exit ${PIPESTATUS[0]}
+          persist-credentials: false
+      - name: Show toolchain
+        run: xcodebuild -version
+      - name: Run regression checks
+        run: /usr/bin/python3 Tests/run-regressions.py
+      - name: Build universal DMG
+        shell: bash
+        run: bash Scripts/build-dmg.sh 2>&1 | tee build.log
+      - name: Check source formatting
+        run: git diff --exit-code -- '*.swift'
+      - name: Upload build artifacts and log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: eul-${{ github.sha }}
+          path: |
+            dist/*.dmg
+            dist/*.sha256
+            build.log
+          retention-days: 14

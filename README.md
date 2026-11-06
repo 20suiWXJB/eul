@@ -4,6 +4,8 @@
 
 # eul
 
+This fork is independently maintained by [20suiWXJB](https://github.com/20suiWXJB), based on [gao-sun/eul](https://github.com/gao-sun/eul). The original MIT license and contributor acknowledgements are retained.
+
 ![Preview](https://user-images.githubusercontent.com/14722250/105626766-f718ab00-5e6c-11eb-9761-661ff85c8faf.jpg)
 
 ## Highlights
@@ -12,6 +14,9 @@
 - Big Sur widgets out of the box
 - Bluetooth battery level
 - Written in SwiftUI (as much as possible)
+- Apple Silicon sensor and GPU improvements, tested on Apple M4 Pro
+- CPU and memory process lists populated when opening their menus
+- Optional units in status bar readings
 
 ## OS Requirement
 
@@ -21,26 +26,34 @@ This fork requires macOS 12.0 or later.
 
 ### Download
 
-Download the [latest release](https://github.com/gao-sun/eul/releases/latest/download/eul.app.zip) directly and drag `.app` file into your `Application` folder.
+Download the DMG from [this fork's latest release](https://github.com/20suiWXJB/eul/releases/latest), open it, and drag `eul.app` into `Applications`. Quit a running copy before replacing it.
 
-### Homebrew Cask
+The DMG includes arm64 and x86_64 binaries. Hardware behavior has been tested on Apple M4 Pro; other Macs have not been verified.
 
-```bash
-brew install --cask eul
+Current builds use ad-hoc signing and are not notarized by Apple. They retain the original app identifier and replace an existing eul installation rather than installing alongside it.
+
+### Updates
+
+The app checks releases in `20suiWXJB/eul` and can show an update indicator. Download and install the new DMG manually; automatic app replacement is disabled. Existing automatic-update preferences fall back to status bar notifications.
+
+Homebrew Cask and App Store listings for the original eul are not distribution channels for this fork.
+
+### Build and maintain
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for setup and hardware verification. Run the hardware-independent checks and build the DMG with:
+
+```sh
+/usr/bin/python3 Tests/run-regressions.py
+bash Scripts/build-dmg.sh
 ```
 
-### App Store
+Develop on feature branches and merge verified changes into this repository's `master`. CI runs the regression checks and builds a DMG. Each release uses a `v`-prefixed version tag matching the app version and includes the DMG and its SHA256 file. Keep the app and Widget versions in sync.
 
-Search `eul` or [click here](https://apps.apple.com/us/app/eul/id1537133867) to view in App Store.
-
-Note:
-
-1. Some features are disabled due to the removal of all SMC calls.
-2. The version is out-dated.
+`origin` is this fork; `upstream` may point to `gao-sun/eul` for selectively reviewing upstream changes.
 
 ### Release Notes
 
-[Click here](https://github.com/gao-sun/eul/releases/latest) to browse our latest release notes.
+See [this fork's releases](https://github.com/20suiWXJB/eul/releases) and [CHANGELOG.md](CHANGELOG.md).
 
 ## Contributors
 

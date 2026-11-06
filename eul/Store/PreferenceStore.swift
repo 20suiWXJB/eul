@@ -18,7 +18,6 @@ class PreferenceStore: ObservableObject {
     enum UpgradeMethod: String, CaseIterable {
         case none
         case showInStatusBar
-        case autoUpdate
     }
 
     static var availableLanguages: [String] {
@@ -26,7 +25,7 @@ class PreferenceStore: ObservableObject {
     }
 
     private let userDefaultsKey = "preference"
-    private let repo = "gao-sun/eul"
+    private let repo = "20suiWXJB/eul"
     private var cancellable: AnyCancellable?
     var repoURL: URL? {
         URL(string: "https://github.com/\(repo)")
@@ -117,10 +116,6 @@ class PreferenceStore: ObservableObject {
                         "v\(version)".compare(tagName, options: .numeric) == .orderedAscending
                     {
                         self.isUpdateAvailable = true
-
-                        if self.upgradeMethod == .autoUpdate {
-                            AutoUpdate.run()
-                        }
                     } else {
                         self.isUpdateAvailable = false
                     }
@@ -179,8 +174,8 @@ class PreferenceStore: ObservableObject {
                 if let raw = data["appearance"].string, let value = Preference.appearance(rawValue: raw) {
                     appearanceMode = value
                 }
-                if let raw = data["upgradeMethod"].string, let value = UpgradeMethod(rawValue: raw) {
-                    upgradeMethod = value
+                if let raw = data["upgradeMethod"].string {
+                    upgradeMethod = UpgradeMethod(rawValue: raw) ?? .showInStatusBar
                 }
                 if let value = data["showStatusBarUnit"].bool {
                     showStatusBarUnit = value

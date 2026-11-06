@@ -84,11 +84,11 @@ BuildTools/.build/release/swiftformat . --lint
 ## 首次适配时需处理的事项
 
 - 七个 Target 的 Debug 配置已改为 `CODE_SIGN_IDENTITY = "-"`、`CODE_SIGN_STYLE = Manual`、`DEVELOPMENT_TEAM = ""`，即 Xcode 的 Sign to Run Locally。Release 仍保留原作者的签名配置，正式发布前需改用自己的 Team、Bundle ID 和 App Group；主程序及四个 Widget 的共享组需保持一致。本地临时签名不能替代正式分发所需的签名配置。
-- 已将工程及全部 Target 的 Debug/Release 最低系统版本统一设为 macOS 12.0，适配当前 Xcode；该 fork 构建的应用不再支持 macOS 10.15/11。旧 CI 仍固定 Xcode 12.4，尚未适配或验证。
+- 已将工程及全部 Target 的 Debug/Release 最低系统版本统一设为 macOS 12.0，适配当前 Xcode；该 fork 构建的应用不再支持 macOS 10.15/11。CI 已改用 `xcode-27` runner，执行无硬件依赖的回归检查及通用 DMG 构建；云端结果以 Actions 实际运行记录为准。
 - 已将 SwiftFormat 构建脚本中的 `SDKROOT=macosx` 改为通过 `xcrun --sdk macosx --show-sdk-path` 获取 SDK 绝对路径，解决当前工具链报错 `invalid absolute path 'macosx'` 的问题。
 - 已修复启动时 SMC 结构大小断言崩溃：协议长度字段固定为 `UInt32`；旧代码使用的 `IOByteCount` 在本机为 64 位，导致结构从要求的 80 字节变为 88 字节。已验证修复后的结构为 80 字节，keyInfo/result/data32/bytes 偏移分别为 28/40/44/48，保留原有断言。
 - Scheme 没有 XCTest Target；本轮新增直接编译实际源码的独立回归检查，命令及硬件验证范围见下节。
-- fork 仍保留原作者的自动更新下载地址。制作自己的发布版本前需要调整更新来源。
+- 更新检查及下载页面已改为 `20suiWXJB/eul`。当前采用手动 DMG 更新，旧自动更新设置回退为状态栏提示；旧 ZIP 下载器已移除，不会自动替换应用。
 
 ## 当前验证范围
 
