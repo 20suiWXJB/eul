@@ -69,9 +69,7 @@ class CpuStore: ObservableObject, Refreshable {
     }
 
     private func getTemp() {
-        temp = (SmcControl.shared.cpuDieTemperature ?? 0) > 0
-            ? SmcControl.shared.cpuDieTemperature
-            : SmcControl.shared.cpuProximityTemperature
+        temp = SmcControl.shared.cpuDieTemperature ?? SmcControl.shared.cpuProximityTemperature
     }
 
     @objc func refresh() {
@@ -88,7 +86,7 @@ class CpuStore: ObservableObject, Refreshable {
             usageUser: usageCPU?.user,
             usageNice: usageCPU?.nice
         ))
-        if #available(OSX 11, *) {
+        if #available(OSX 11, *), Container.isSharedStorageAvailable {
             WidgetCenter.shared.reloadTimelines(ofKind: CpuEntry.kind)
         }
     }

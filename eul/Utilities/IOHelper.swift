@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import IOKit
 
 enum IOHelper {
     static func getProperties(entry: io_object_t) -> NSDictionary? {
@@ -43,7 +44,12 @@ enum IOHelper {
 
         while entry != 0 {
             if let properties = getProperties(entry: entry) {
-                propertyList.append(properties)
+                let identified = properties.mutableCopy() as! NSMutableDictionary
+                var registryID: UInt64 = 0
+                if IORegistryEntryGetRegistryEntryID(entry, &registryID) == kIOReturnSuccess {
+                    identified["eulRegistryID"] = registryID
+                }
+                propertyList.append(identified)
             }
             IOObjectRelease(entry)
             entry = IOIteratorNext(iterator)

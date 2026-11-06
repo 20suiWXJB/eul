@@ -15,7 +15,7 @@
 
 ## OS Requirement
 
-macOS 10.15 minimum for SwiftUI support
+This fork requires macOS 12.0 or later.
 
 ## Installation
 

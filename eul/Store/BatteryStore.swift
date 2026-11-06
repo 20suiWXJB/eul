@@ -61,7 +61,7 @@ class BatteryStore: ObservableObject, Refreshable {
         Container.set(BatteryEntry(
             isCharging: charging, acPowered: acPowered, charge: charge, capacity: capacity, maxCapacity: maxCapacity, designCapacity: designCapacity, cycleCount: cycleCount, condition: io.condition
         ))
-        if #available(OSX 11, *) {
+        if #available(OSX 11, *), Container.isSharedStorageAvailable {
             WidgetCenter.shared.reloadTimelines(ofKind: BatteryEntry.kind)
         }
     }

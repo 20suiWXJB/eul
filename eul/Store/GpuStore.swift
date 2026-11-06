@@ -45,7 +45,7 @@ class GpuStore: ObservableObject, Refreshable {
 
     func getStatustic(for gpu: GPU) -> GPU.Statistic? {
         gpuStatistics.first {
-            $0.pciMatch.lowercased().contains(gpu.deviceId.deletingPrefix("0x"))
+            $0.matches(gpu)
         }
     }
 
@@ -72,6 +72,10 @@ class GpuStore: ObservableObject, Refreshable {
         }
 
         gpuStatistics = GPU.getInfo() ?? []
-        usageHistory = (usageHistory + [usageAverage ?? 0]).suffix(LineChart.defaultMaxPointCount)
+        if let usage = usageAverage {
+            usageHistory = (usageHistory + [usage]).suffix(LineChart.defaultMaxPointCount)
+        } else {
+            usageHistory = []
+        }
     }
 }

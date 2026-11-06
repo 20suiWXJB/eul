@@ -30,6 +30,10 @@ public extension StandardProvider {
     }
 
     func getTimeline(in _: Context, completion: @escaping (Timeline<WidgetEntry>) -> Void) {
+        guard Container.isSharedStorageAvailable else {
+            completion(Timeline(entries: [WidgetEntry(outdated: true)], policy: .never))
+            return
+        }
         let entry = Container.get(WidgetEntry.self) ?? WidgetEntry(outdated: true)
         let currentDate = Date()
         let nextDate = Calendar.current.date(byAdding: .second, value: 10, to: currentDate)!

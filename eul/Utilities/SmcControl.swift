@@ -16,8 +16,15 @@ class SmcControl: Refreshable {
     var sensors: [TemperatureData] = []
     var fans: [FanData] = []
     var tempUnit: TemperatureUnit = .celius
+    private var errors: [String: String] = [:]
+
+    private func averageTemperature(_ group: TemperatureSensor.Group) -> Double? {
+        let values = sensors.filter { $0.sensor.group == group }.compactMap { $0.temp }
+        return values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
+    }
+
     var cpuDieTemperature: Double? {
-        sensors.first(where: { $0.sensor.name == "CPU_0_DIE" })?.temp
+        averageTemperature(.cpu) ?? sensors.first(where: { $0.sensor.name == "CPU_0_DIE" })?.temp
     }
 
     var cpuProximityTemperature: Double? {
@@ -25,11 +32,11 @@ class SmcControl: Refreshable {
     }
 
     var gpuProximityTemperature: Double? {
-        sensors.first(where: { $0.sensor.name == "GPU_0_PROXIMITY" })?.temp
+        averageTemperature(.gpu) ?? sensors.first(where: { $0.sensor.name == "GPU_0_PROXIMITY" })?.temp
     }
 
     var memoryProximityTemperature: Double? {
-        sensors.first(where: { $0.sensor.name == "MEM_SLOTS_PROXIMITY" })?.temp
+        averageTemperature(.memory) ?? sensors.first(where: { $0.sensor.name == "MEM_SLOTS_PROXIMITY" })?.temp
     }
 
     var isFanValid: Bool {
@@ -37,20 +44,23 @@ class SmcControl: Refreshable {
     }
 
     func formatTemp(_ value: Double) -> String {
-        String(format: "%.0f°\(tempUnit == .celius ? "C" : "F")", value)
+        value.formatTemp(unit: tempUnit)
     }
 
     init() {
         do {
             try SMCKit.open()
             sensors = try SMCKit.allKnownTemperatureSensors().map { .init(sensor: $0) }
-            fans = try (0..<SMCKit.fanCount()).map { FanData(
-                id: $0,
-                minSpeed: try? SMCKit.fanMinSpeed($0),
-                maxSpeed: try? SMCKit.fanMaxSpeed($0)
-            ) }
         } catch {
             print("SMC init error", error)
+            return
+        }
+        if let count = read("FNum", { try SMCKit.fanCount() }) {
+            fans = (0..<count).map { id in
+                FanData(id: id,
+                        minSpeed: read("F\(id)Mn") { try SMCKit.fanMinSpeed(id) },
+                        maxSpeed: read("F\(id)Mx") { try SMCKit.fanMaxSpeed(id) })
+            }
         }
     }
 
@@ -68,22 +78,30 @@ class SmcControl: Refreshable {
 
     @objc func refresh() {
         for sensor in sensors {
-            do {
-                sensor.temp = try SMCKit.temperature(sensor.sensor.code, unit: tempUnit)
-            } catch {
-                sensor.temp = 0
-                print("error while getting temperature", error)
-            }
+            _ = read(sensor.sensor.code.toString()) { try sensor.refresh(unit: tempUnit) }
         }
-        fans = fans.map {
+        fans = fans.map { fan in
             FanData(
-                id: $0.id,
-                currentSpeed: try? SMCKit.fanCurrentSpeed($0.id),
-                minSpeed: $0.minSpeed,
-                maxSpeed: $0.maxSpeed
+                id: fan.id,
+                currentSpeed: read("F\(fan.id)Ac") { try SMCKit.fanCurrentSpeed(fan.id) },
+                minSpeed: fan.minSpeed,
+                maxSpeed: fan.maxSpeed
             )
         }
         NotificationCenter.default.post(name: .StoreShouldRefresh, object: nil)
+    }
+
+    private func read<T>(_ key: String, _ operation: () throws -> T) -> T? {
+        do {
+            let value = try operation()
+            if errors.removeValue(forKey: key) != nil { print("SMC recovered", key) }
+            return value
+        } catch {
+            let message = String(describing: error)
+            if errors[key] != message { print("SMC read error", key, message) }
+            errors[key] = message
+            return nil
+        }
     }
 }
 

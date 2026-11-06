@@ -47,7 +47,7 @@ struct BatteryMenuBlockView: View {
             HStack {
                 Text("battery.health".localized())
                     .miniSection()
-                Text(batteryStore.health.percentageString)
+                Text(batteryStore.designCapacity > 0 && batteryStore.maxCapacity > 0 ? batteryStore.health.percentageString : "N/A")
                     .displayText()
                 if batteryStore.maxCapacity > 0 {
                     Spacer()

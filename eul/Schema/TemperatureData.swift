@@ -11,10 +11,19 @@ import SharedLibrary
 
 class TemperatureData {
     let sensor: TemperatureSensor
-    var temp: Double
+    var temp: Double?
 
-    init(sensor: TemperatureSensor, temp: Double = 0) {
+    init(sensor: TemperatureSensor, temp: Double? = nil) {
         self.sensor = sensor
         self.temp = temp
+    }
+
+    func refresh(unit: TemperatureUnit, read: (FourCharCode, TemperatureUnit) throws -> Double = SMCKit.temperature) throws {
+        do {
+            temp = try read(sensor.code, unit)
+        } catch {
+            temp = nil
+            throw error
+        }
     }
 }

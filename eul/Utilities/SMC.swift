@@ -196,8 +196,8 @@ public struct SMCParamStruct {
     }
 
     public struct SMCKeyInfoData {
-        /// How many bytes written to SMCParamStruct.bytes
-        var dataSize: IOByteCount = 0
+        /// The SMC protocol uses a 32-bit length, independent of IOByteCount.
+        var dataSize: UInt32 = 0
 
         /// Type of data written to SMCParamStruct.bytes. This lets us know how
         /// to interpret it (translate it to human readable)
@@ -291,6 +291,9 @@ public enum SMCKit {
         /// Fan speed must be > 0 && <= fanMaxSpeed
         case unsafeFanSpeed
 
+        case unsupportedDataType
+        case invalidDataValue
+
         /// https://developer.apple.com/library/mac/qa/qa1075/_index.html
         ///
         /// - parameter kIOReturn: I/O Kit error code
@@ -333,7 +336,7 @@ public enum SMCKit {
         let outputStruct = try callDriver(&inputStruct)
 
         return DataType(type: outputStruct.keyInfo.dataType,
-                        size: UInt32(outputStruct.keyInfo.dataSize))
+                        size: outputStruct.keyInfo.dataSize)
     }
 
     /// Get information about the key at index
@@ -355,7 +358,7 @@ public enum SMCKit {
         var inputStruct = SMCParamStruct()
 
         inputStruct.key = key.code
-        inputStruct.keyInfo.dataSize = IOByteCount(UInt32(key.info.size))
+        inputStruct.keyInfo.dataSize = key.info.size
         inputStruct.data8 = SMCParamStruct.Selector.kSMCReadKey.rawValue
 
         let outputStruct = try callDriver(&inputStruct)
@@ -369,7 +372,7 @@ public enum SMCKit {
 
         inputStruct.key = key.code
         inputStruct.bytes = data
-        inputStruct.keyInfo.dataSize = IOByteCount(UInt32(key.info.size))
+        inputStruct.keyInfo.dataSize = key.info.size
         inputStruct.data8 = SMCParamStruct.Selector.kSMCWriteKey.rawValue
 
         _ = try callDriver(&inputStruct)
@@ -414,6 +417,30 @@ public enum SMCKit {
 // ------------------------------------------------------------------------------
 
 public extension SMCKit {
+    /// Decode using the type reported by the driver, not the caller's assumption.
+    static func decodeNumber(_ bytes: SMCBytes, info: DataType) throws -> Double {
+        let value: Double
+        if info == DataTypes.FLT {
+            let bits = UInt32(bytes.0) | UInt32(bytes.1) << 8 | UInt32(bytes.2) << 16 | UInt32(bytes.3) << 24
+            value = Double(Float(bitPattern: bits))
+        } else if info == DataTypes.SP78 {
+            let bits = UInt16(bytes.0) << 8 | UInt16(bytes.1)
+            value = Double(Int16(bitPattern: bits)) / 256
+        } else if info == DataTypes.FPE2 {
+            value = Double(UInt16(bytes.0) << 8 | UInt16(bytes.1)) / 4
+        } else {
+            throw SMCError.unsupportedDataType
+        }
+        guard value.isFinite else { throw SMCError.invalidDataValue }
+        return value
+    }
+
+    static func number(_ code: FourCharCode) throws -> Double {
+        let info = try keyInformation(code)
+        let bytes = try readData(SMCKey(code: code, info: info))
+        return try decodeNumber(bytes, info: info)
+    }
+
     /// Get all valid SMC keys for this machine
     static func allKeys() throws -> [SMCKey] {
         let count = try keyCount()
@@ -566,14 +593,49 @@ public enum TemperatureSensors {
                              THUNDERBOLT_1.code: THUNDERBOLT_1]
 }
 
+extension TemperatureSensors {
+    static func appleSilicon(chip: String) -> [TemperatureSensor] {
+        let cpu: [String]
+        let gpu: [String]
+        let memory: [String]
+        if chip.contains("Apple M4") {
+            cpu = ["Te05", "Te0S", "Te09", "Te0H", "Tp01", "Tp05", "Tp09", "Tp0D", "Tp0V", "Tp0Y", "Tp0b", "Tp0e"]
+            let gpuCores = chip.contains("Pro") || chip.contains("Max") ? ["Tg1U", "Tg1k"] : ["Tg0G", "Tg0H"]
+            gpu = gpuCores + ["Tg0K", "Tg0L", "Tg0d", "Tg0e", "Tg0j", "Tg0k"]
+            memory = ["Tm0p", "Tm1p", "Tm2p"]
+        } else {
+            // Probe known Apple Silicon candidates; absent keys are skipped.
+            cpu = ["Tp01", "Tp05", "Tp09", "Tp0D", "Tp0H", "Tp0L", "Tp0P", "Tp0T", "Tp0X", "Tp0b", "Tp0f", "Te05"]
+            gpu = ["Tg05", "Tg0D", "Tg0L", "Tg0T"]
+            memory = []
+        }
+        return [(TemperatureSensor.Group.cpu, cpu), (.gpu, gpu), (.memory, memory)].flatMap { group, keys in
+            keys.map { TemperatureSensor(name: $0, code: FourCharCode(fromString: $0), group: group) }
+        }
+    }
+
+    static func forCurrentHardware() -> [TemperatureSensor] {
+        #if arch(arm64)
+            var size = 0
+            sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
+            var name = [CChar](repeating: 0, count: max(size, 1))
+            sysctlbyname("machdep.cpu.brand_string", &name, &size, nil, 0)
+            return appleSilicon(chip: String(cString: name))
+        #else
+            return Array(all.values)
+        #endif
+    }
+}
+
 public extension SMCKit {
     static func allKnownTemperatureSensors() throws ->
         [TemperatureSensor]
     {
         var sensors = [TemperatureSensor]()
 
-        for sensor in TemperatureSensors.all.values {
-            if try isKeyFound(sensor.code) { sensors.append(sensor) }
+        for sensor in TemperatureSensors.forCurrentHardware() {
+            // Missing or inaccessible keys must not suppress other sensors.
+            if (try? keyInformation(sensor.code)) != nil { sensors.append(sensor) }
         }
 
         return sensors
@@ -593,9 +655,8 @@ public extension SMCKit {
     static func temperature(_ sensorCode: FourCharCode,
                             unit: TemperatureUnit = .celius) throws -> Double
     {
-        let data = try readData(SMCKey(code: sensorCode, info: DataTypes.SP78))
-
-        let temperatureInCelius = Double(fromSP78: (data.0, data.1))
+        let temperatureInCelius = try number(sensorCode)
+        guard (-50...150).contains(temperatureInCelius) else { throw SMCError.invalidDataValue }
 
         switch unit {
         case .celius:
@@ -678,23 +739,9 @@ public extension SMCKit {
     }
 
     private static func decodeData(with code: String) throws -> Int {
-        do {
-            let key = SMCKey(
-                code: FourCharCode(fromString: code),
-                info: DataTypes.FPE2
-            )
-
-            let data = try readData(key)
-            return Int(fromFPE2: (data.0, data.1))
-        } catch SMCError.unknown(kIOReturn: 0, SMCResult: 135) {
-            let key = SMCKey(
-                code: FourCharCode(fromString: code),
-                info: DataTypes.FLT
-            )
-
-            let data = try readData(key)
-            return Int(fromFLT: (data.0, data.1, data.2, data.3))
-        }
+        let value = try number(FourCharCode(fromString: code))
+        guard value >= 0, value <= Double(Int32.max) else { throw SMCError.invalidDataValue }
+        return Int(value)
     }
 
     static func fanCurrentSpeed(_ id: Int) throws -> Int {

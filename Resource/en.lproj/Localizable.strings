@@ -222,3 +222,5 @@
 "widget.battery.description" = "Display battery information";
 "widget.network.title" = "Network Widget";
 "widget.network.description" = "Display network information";
+
+"ui.widget.local_debug_unavailable" = "Widget data sharing is disabled in local debug builds.";

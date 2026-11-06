@@ -77,6 +77,10 @@ extension Preference {
                     Text("ui.launch_at_login".localized())
                         .inlineSection()
                 }
+                if !Container.isSharedStorageAvailable {
+                    Text("ui.widget.local_debug_unavailable".localized())
+                        .secondaryDisplayText()
+                }
                 Toggle(isOn: $preference.checkStatusItemVisibility) {
                     Text("ui.check_status_item_visibility".localized())
                         .inlineSection()

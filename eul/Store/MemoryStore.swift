@@ -63,7 +63,7 @@ class MemoryStore: ObservableObject, Refreshable {
 
     func writeToContainer() {
         Container.set(MemoryEntry(used: used, total: total, temp: temp))
-        if #available(OSX 11, *) {
+        if #available(OSX 11, *), Container.isSharedStorageAvailable {
             WidgetCenter.shared.reloadTimelines(ofKind: MemoryEntry.kind)
         }
     }

@@ -9,7 +9,15 @@
 import Foundation
 
 public enum Container {
-    public static let defaults = UserDefaults(suiteName: "com.gaosun.eul.shared")
+    public static var isSharedStorageAvailable: Bool {
+        defaults != nil
+    }
+
+    #if DEBUG
+        public static let defaults: UserDefaults? = nil
+    #else
+        public static let defaults = UserDefaults(suiteName: "com.gaosun.eul.shared")
+    #endif
     static let pListEncoder = PropertyListEncoder()
     static let pListDecoder = PropertyListDecoder()
 

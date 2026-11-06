@@ -9,13 +9,19 @@
 import Foundation
 
 public struct TemperatureSensor {
-    public init(name: String, code: FourCharCode) {
+    public enum Group {
+        case cpu, gpu, memory, other
+    }
+
+    public init(name: String, code: FourCharCode, group: Group = .other) {
         self.name = name
         self.code = code
+        self.group = group
     }
 
     public let name: String
     public let code: FourCharCode
+    public let group: Group
 }
 
 public extension TemperatureUnit {
